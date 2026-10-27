@@ -32,9 +32,9 @@ async function seed(sessionId) {
 await seed(id)
 
 const detached = []
-function makeCtx({ live = false } = {}) {
+function makeCtx({ agentStatus = null } = {}) {
   return {
-    agents: { get: () => (live ? { id } : undefined) },
+    agents: { get: () => (agentStatus ? { id, status: agentStatus } : undefined) },
     workspaceRegistry: {
       list: () => [
         {
@@ -55,17 +55,25 @@ const info = await inspectSession(makeCtx(), id)
 assert.equal(info.exists, true)
 assert.equal(info.bytes, 3072)
 assert.equal(info.files, 2)
-assert.equal(info.live, false)
+assert.equal(info.running, false)
 assert.deepEqual(info.workspaces, [{ id: 'w1', title: 'demo' }])
 console.log('ok 1 预检:', info)
 
-// 2) 活着的不让删
-await assert.rejects(() => removeSession(makeCtx({ live: true }), id), (error) => {
-  assert.equal(error.code, 'SESSION_LIVE')
+// 2) 还在生成回复的不让删
+await assert.rejects(() => removeSession(makeCtx({ agentStatus: 'running' }), id), (error) => {
+  assert.equal(error.code, 'SESSION_RUNNING')
   return true
 })
-assert.ok((await stat(sessionDir)).isDirectory(), '活着的会话不能被删')
-console.log('ok 2 运行中拒绝删除')
+assert.ok((await stat(sessionDir)).isDirectory(), '正在生成的会话不能被删')
+console.log('ok 2 生成中拒绝删除')
+
+// 2b) 已停下（idle）的会话，哪怕还开着也允许删
+const idleId = 'session-22222222-3333-4444-5555-666666666666'
+await seed(idleId)
+const idleResult = await removeSession(makeCtx({ agentStatus: 'idle' }), idleId)
+assert.equal(idleResult.removedDirs, 1)
+await assert.rejects(() => stat(join(home, 'sessions', slug, idleId)))
+console.log('ok 2b 空闲会话可删')
 
 // 3) 非法 id
 for (const bad of ['', 'abc', 'session-../../etc', 'session-01942024-7499-451c-a55c-cded11c07d3f/../x']) {
@@ -135,7 +143,7 @@ assert.equal(health.home, home)
 const statPayload = await (await fetch(`${base}/dsh-session-cleanup/stat?id=${id2}`)).json()
 assert.equal(statPayload.ok, true)
 assert.equal(statPayload.bytes, 3072)
-assert.equal(statPayload.live, false)
+assert.equal(statPayload.running, false)
 
 const forbidden = await fetch(`${base}/dsh-session-cleanup/stat?id=${id2}`, {
   headers: { origin: 'http://evil.example.com' },
