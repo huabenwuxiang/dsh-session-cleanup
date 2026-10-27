@@ -1,0 +1,4 @@
+# dsh-session-cleanup 的 bundle patch：把插件挂进 DSH 的配置树。
+- insert:
+    - id: dsh-session-cleanup
+      name: 'dsh-session-cleanup'

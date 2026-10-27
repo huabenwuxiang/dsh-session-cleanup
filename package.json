@@ -1,0 +1,42 @@
+{
+  "name": "dsh-session-cleanup",
+  "version": "0.1.0",
+  "private": true,
+  "description": "给 DSH 侧栏会话菜单加上「删除对话」：连同磁盘上的会话日志一起删掉。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "cordis"
+  ],
+  "homepage": "https://github.com/huabenwuxiang/dsh-session-cleanup#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huabenwuxiang/dsh-session-cleanup.git"
+  },
+  "bugs": {
+    "url": "https://github.com/huabenwuxiang/dsh-session-cleanup/issues"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  }
+}
